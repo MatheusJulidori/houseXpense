@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/*────────────────────────  TABELAS  ────────────────────────*/
+
+model Household {
+  id          String       @id @default(uuid())
+  name        String
+  description String
+  createdAt   DateTime     @default(now())
+
+  people      Person[]
+  expenses    Expense[]
+  settlements Settlement[]
+}
+
+model Person {
+  id              String       @id @default(uuid())
+  name            String
+  salary          Decimal      @db.Decimal(12,2) 
+
+  householdId     String
+  household       Household    @relation(fields: [householdId], references: [id])
+
+  /* relations */
+  expensesOwned   Expense[]    @relation("PersonalExpenses")
+  expensesPaid    Expense[]    @relation("ExpensePayer")
+  settlementsFrom Settlement[] @relation("FromSettlements")
+  settlementsTo   Settlement[] @relation("ToSettlements")
+}
+
+model Expense {
+  id          String       @id @default(uuid())
+  description String
+  amount      Decimal      @db.Decimal(12,2)
+  type        ExpenseType
+  date        DateTime     @default(now())
+
+  householdId String
+  household   Household    @relation(fields: [householdId], references: [id])
+
+  personId    String?      
+  person      Person?      @relation("PersonalExpenses", fields: [personId], references: [id])
+
+  paidById    String?
+  paidBy      Person?      @relation("ExpensePayer", fields: [paidById], references: [id])
+}
+
+model Settlement {
+  id            String    @id @default(uuid())
+  amount        Decimal   @db.Decimal(12,2)
+  date          DateTime  @default(now())
+
+  householdId   String
+  household     Household @relation(fields: [householdId], references: [id])
+
+  fromPersonId  String
+  fromPerson    Person    @relation("FromSettlements", fields: [fromPersonId], references: [id])
+
+  toPersonId    String
+  toPerson      Person    @relation("ToSettlements", fields: [toPersonId], references: [id])
+}
+
+enum ExpenseType {
+  HOUSE
+  PERSONAL
+}
