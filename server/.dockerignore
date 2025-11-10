@@ -1,0 +1,17 @@
+node_modules
+dist
+coverage
+.npm
+.cache
+.git
+.github
+.husky
+.idea
+.vscode
+.cursor
+Dockerfile
+docker-compose.yml
+npm-debug.log*
+*.tsbuildinfo
+.env
+
