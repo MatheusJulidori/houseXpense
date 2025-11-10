@@ -1,0 +1,210 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+	font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+	line-height: 1.5;
+	font-weight: 400;
+
+	color-scheme: dark;
+	color: rgba(255, 255, 255, 0.87);
+	background-color: #0a0a0a;
+
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	--radius: 0.625rem;
+
+	/* Financial Dark Theme - Based on julidori.dev branding */
+	--background: oklch(0.05 0 0); /* Very dark background */
+	--foreground: oklch(0.95 0 0); /* Near white text */
+	--card: oklch(0.08 0 0); /* Slightly lighter cards */
+	--card-foreground: oklch(0.95 0 0); /* White text on cards */
+	--popover: oklch(0.08 0 0); /* Popover background */
+	--popover-foreground: oklch(0.95 0 0); /* White text on popovers */
+
+	/* Primary - Brand Orange (#EB5D39) */
+	--primary: oklch(0.68 0.2 45); /* Vibrant orange */
+	--primary-foreground: oklch(0.98 0 0); /* White text on primary */
+
+	/* Secondary - Darker orange for secondary actions */
+	--secondary: oklch(0.3 0.07 45); /* Dark orange */
+	--secondary-foreground: oklch(0.95 0 0); /* Light text */
+
+	/* Muted - Subtle backgrounds */
+	--muted: oklch(0.12 0 0); /* Dark muted */
+	--muted-foreground: oklch(0.6 0 0); /* Muted text */
+
+	/* Accent - Softer orange highlight */
+	--accent: oklch(0.72 0.12 45); /* Soft orange */
+	--accent-foreground: oklch(0.95 0 0); /* White text on accent */
+
+	/* Financial specific colors */
+	--success: oklch(0.6 0.15 140); /* Green for income */
+	--success-foreground: oklch(0.95 0 0); /* White text on success */
+	--destructive: oklch(0.6 0.15 20); /* Red for expenses */
+	--destructive-foreground: oklch(0.95 0 0); /* White text on destructive */
+	--warning: oklch(0.7 0.15 60); /* Yellow for warnings */
+	--warning-foreground: oklch(0.1 0 0); /* Dark text on warning */
+
+	/* UI elements */
+	--border: oklch(0.2 0 0); /* Subtle borders */
+	--input: oklch(0.12 0 0); /* Input backgrounds */
+	--ring: var(--primary); /* Focus rings in primary color */
+
+	/* Chart colors for financial data */
+	--chart-1: oklch(0.68 0.2 45); /* Primary orange */
+	--chart-2: oklch(0.6 0.15 140); /* Green for income */
+	--chart-3: oklch(0.6 0.15 20); /* Red for expenses */
+	--chart-4: oklch(0.72 0.12 45); /* Soft orange */
+	--chart-5: oklch(0.7 0.15 60); /* Yellow for other */
+
+	/* Sidebar */
+	--sidebar: oklch(0.08 0 0); /* Dark sidebar */
+	--sidebar-foreground: oklch(0.9 0 0); /* Light sidebar text */
+	--sidebar-primary: oklch(0.68 0.2 45); /* Primary in sidebar */
+	--sidebar-primary-foreground: oklch(
+		0.95 0 0
+	); /* White text on sidebar primary */
+	--sidebar-accent: oklch(0.15 0.05 280); /* Dark purple accent */
+	--sidebar-accent-foreground: oklch(
+		0.9 0 0
+	); /* Light text on sidebar accent */
+	--sidebar-border: oklch(0.2 0 0); /* Subtle sidebar borders */
+	--sidebar-ring: oklch(0.6 0.15 280); /* Focus rings in sidebar */
+}
+
+a {
+	font-weight: 500;
+	color: oklch(0.68 0.2 45);
+	text-decoration: inherit;
+	transition: color 0.2s ease;
+}
+a:hover {
+	color: oklch(0.72 0.12 45);
+}
+
+body {
+	margin: 0;
+	min-width: 320px;
+	min-height: 100vh;
+	background: oklch(0.05 0 0);
+}
+
+h1 {
+	font-size: 3.2em;
+	line-height: 1.1;
+	color: oklch(0.95 0 0);
+}
+
+button {
+	border-radius: 8px;
+	border: 1px solid transparent;
+	padding: 0.6em 1.2em;
+	font-size: 1em;
+	font-weight: 500;
+	font-family: inherit;
+	background-color: oklch(0.3 0.07 45);
+	color: oklch(0.95 0 0);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+button:hover {
+	background-color: oklch(0.68 0.2 45);
+	color: oklch(0.98 0 0);
+}
+button:focus,
+button:focus-visible {
+	outline: 2px solid oklch(0.68 0.2 45);
+	outline-offset: 2px;
+}
+
+@theme inline {
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+
+	/* Financial app specific styles */
+	.financial-card {
+		@apply bg-card border border-border rounded-lg p-4 shadow-sm;
+	}
+
+	.income-text {
+		@apply text-success;
+	}
+
+	.expense-text {
+		@apply text-destructive;
+	}
+
+	.primary-gradient {
+		background: linear-gradient(
+			135deg,
+			oklch(0.68 0.2 45),
+			oklch(0.72 0.12 45)
+		);
+	}
+
+	.success-gradient {
+		background: linear-gradient(
+			135deg,
+			oklch(0.6 0.15 140),
+			oklch(0.65 0.12 120)
+		);
+	}
+
+	.destructive-gradient {
+		background: linear-gradient(
+			135deg,
+			oklch(0.6 0.15 20),
+			oklch(0.65 0.12 30)
+		);
+	}
+}
