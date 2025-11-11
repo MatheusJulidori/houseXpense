@@ -9,7 +9,6 @@ export const APP_CONFIG = {
 
 // Local storage keys
 export const STORAGE_KEYS = {
-    AUTH_TOKEN: 'auth_token',
     USER: 'user',
     THEME: 'theme',
     PREFERENCES: 'preferences',

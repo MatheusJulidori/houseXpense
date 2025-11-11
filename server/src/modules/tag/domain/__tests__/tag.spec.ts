@@ -3,6 +3,7 @@ import { Tag, type TagProps } from '../entities/tag';
 const buildTagProps = (overrides: Partial<TagProps> = {}): TagProps => ({
   id: 'tag-1',
   name: 'assinatura',
+  userId: 'user-1',
   createdAt: new Date('2025-01-02T10:00:00Z'),
   ...overrides,
 });
@@ -15,6 +16,7 @@ describe('Tag Domain Entity', () => {
     expect(tag.toJSON()).toMatchObject({
       id: 'tag-1',
       name: 'assinatura',
+      userId: 'user-1',
     });
   });
 

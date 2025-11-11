@@ -1,59 +1,88 @@
 import { api } from './api';
-import type { LoginRequest, RegisterRequest, AuthResponse, User } from '../types/auth.types';
+import type { AuthSessionResponse, LoginRequest, RegisterRequest, User } from '../types/auth.types';
+import { STORAGE_KEYS } from '../utils/constants';
+import { getCsrfToken, getRefreshToken } from '../utils/cookies';
+
+const isBrowser = typeof window !== 'undefined';
+
+const storage = {
+    setUser(user: User | null): void {
+        if (!isBrowser) {
+            return;
+        }
+        if (!user) {
+            localStorage.removeItem(STORAGE_KEYS.USER);
+            return;
+        }
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    },
+    getUser(): User | null {
+        if (!isBrowser) {
+            return null;
+        }
+        const raw = localStorage.getItem(STORAGE_KEYS.USER);
+        return raw ? (JSON.parse(raw) as User) : null;
+    },
+    clear(): void {
+        if (!isBrowser) {
+            return;
+        }
+        localStorage.removeItem(STORAGE_KEYS.USER);
+    },
+};
 
 export const authService = {
-    // Login user
-    login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-        return api.post<AuthResponse>('/auth/login', credentials);
+    login: async (credentials: LoginRequest): Promise<AuthSessionResponse> => {
+        const session = await api.post<AuthSessionResponse>('/auth/login', credentials);
+        storage.setUser(session.user);
+        return session;
     },
 
-    // Register user
-    register: async (userData: RegisterRequest): Promise<AuthResponse> => {
-        return api.post<AuthResponse>('/auth/register', userData);
+    register: async (userData: RegisterRequest): Promise<AuthSessionResponse> => {
+        const session = await api.post<AuthSessionResponse>('/auth/register', userData);
+        storage.setUser(session.user);
+        return session;
     },
 
-    // Get current user (if you add this endpoint to backend)
     getCurrentUser: async (): Promise<User> => {
-        return api.get<User>('/auth/me');
+        const me = await api.get<User>('/auth/me');
+        storage.setUser(me);
+        return me;
     },
 
-    // Token management
-    setToken: (token: string): void => {
-        localStorage.setItem('auth_token', token);
-    },
+    setUser: storage.setUser,
+    getUser: storage.getUser,
+    removeUser: storage.clear,
 
-    getToken: (): string | null => {
-        return localStorage.getItem('auth_token');
-    },
-
-    removeToken: (): void => {
-        localStorage.removeItem('auth_token');
-    },
-
-    // User data management
-    setUser: (user: User): void => {
-        localStorage.setItem('user', JSON.stringify(user));
-    },
-
-    getUser: (): User | null => {
-        const userStr = localStorage.getItem('user');
-        return userStr ? JSON.parse(userStr) : null;
-    },
-
-    removeUser: (): void => {
-        localStorage.removeItem('user');
-    },
-
-    // Check if user is authenticated
     isAuthenticated: (): boolean => {
-        const token = authService.getToken();
-        // Consider a user authenticated if a token exists; user profile will be hydrated separately
-        return !!token;
+        const hasUser = !!storage.getUser();
+        if (hasUser) {
+            return true;
+        }
+        return !!getRefreshToken();
     },
 
-    // Logout
-    logout: (): void => {
-        authService.removeToken();
-        authService.removeUser();
+    hasActiveSessionCookie: (): boolean => !!getRefreshToken(),
+
+    logout: async (): Promise<void> => {
+        try {
+            const csrf = getCsrfToken();
+            await api.post<void>(
+                '/auth/logout',
+                undefined,
+                csrf
+                    ? {
+                          headers: {
+                              'X-CSRF-Token': csrf,
+                          },
+                      }
+                    : undefined
+            );
+        } catch (error) {
+            // If the session is already invalidated, ignore logout errors
+            console.warn('Failed to call logout endpoint', error);
+        } finally {
+            storage.clear();
+        }
     },
 };

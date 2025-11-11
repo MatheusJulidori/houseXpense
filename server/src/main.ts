@@ -6,12 +6,15 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggingMiddleware } from './middleware/logging.middleware';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import appConfig from './config/app.config';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Use Winston logger
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+
+  app.use(cookieParser());
 
   // Add logging middleware
   app.use(new LoggingMiddleware().use.bind(new LoggingMiddleware()));
@@ -38,6 +41,7 @@ async function bootstrap() {
       'Content-Type',
       'X-Requested-With',
       'Origin',
+      'X-CSRF-Token',
     ],
     exposedHeaders: ['Authorization'],
   });

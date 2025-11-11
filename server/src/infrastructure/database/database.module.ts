@@ -6,6 +6,7 @@ import * as path from 'path';
 import { UserOrmEntity } from '../../modules/auth/infrastructure/entities/user.orm-entity';
 import { TagOrmEntity } from '../../modules/tag/infrastructure/entities/tag.orm-entity';
 import { MovementOrmEntity } from '../../modules/movement/infrastructure/entities/movement.orm-entity';
+import { RefreshTokenOrmEntity } from '../../modules/auth/infrastructure/entities/refresh-token.orm-entity';
 import databaseConfig from '../../config/database.config';
 
 @Module({
@@ -82,7 +83,12 @@ import databaseConfig from '../../config/database.config';
           password,
           database: databaseName,
           ssl,
-          entities: [UserOrmEntity, TagOrmEntity, MovementOrmEntity],
+          entities: [
+            UserOrmEntity,
+            TagOrmEntity,
+            MovementOrmEntity,
+            RefreshTokenOrmEntity,
+          ],
           synchronize: nodeEnv !== 'production',
           logging: nodeEnv === 'development',
         };

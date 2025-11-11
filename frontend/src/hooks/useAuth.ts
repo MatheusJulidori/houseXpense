@@ -1,93 +1,77 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import { authService } from '../services/auth.service';
-import { useEffect } from 'react';
 import type { LoginRequest, RegisterRequest, User } from '../types/auth.types';
+import { STORAGE_KEYS } from '../utils/constants';
 
-// Query keys
 export const authKeys = {
     all: ['auth'] as const,
     user: () => [...authKeys.all, 'user'] as const,
 };
 
-// Custom hook for authentication
+const isBrowser = typeof window !== 'undefined';
+
 export const useAuth = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const [user, setUser] = useState<User | null>(() => authService.getUser());
 
-    // Get current user from localStorage
-    const user = authService.getUser();
-    const token = authService.getToken();
-    const isAuthenticated = authService.isAuthenticated();
-
-    // Hydrate user from API if we have a token but no stored user
     useEffect(() => {
-        const hydrate = async () => {
-            if (token && !user) {
+        if (isBrowser) {
+            const handleStorage = (event: StorageEvent) => {
+                if (event.key === STORAGE_KEYS.USER) {
+                    setUser(authService.getUser());
+                }
+            };
+            window.addEventListener('storage', handleStorage);
+            return () => window.removeEventListener('storage', handleStorage);
+        }
+        return undefined;
+    }, []);
+
+    useEffect(() => {
+        if (!user && authService.hasActiveSessionCookie()) {
+            const hydrateUser = async () => {
                 try {
                     const me = await authService.getCurrentUser();
-                    authService.setUser(me);
+                    setUser(me);
                     await queryClient.invalidateQueries({ queryKey: authKeys.user() });
                 } catch {
-                    // If token invalid, logout
-                    authService.logout();
+                    await authService.logout();
+                    setUser(null);
                 }
-            }
-        };
-        void hydrate();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]);
-
-    // Login mutation
-    const loginMutation = useMutation({
-        mutationFn: async (credentials: LoginRequest) => {
-            const response = await authService.login(credentials);
-            authService.setToken(response.access_token);
-            // Fetch current user with fresh token
-            const me = await authService.getCurrentUser();
-            authService.setUser(me);
-            return response;
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: authKeys.user() });
-        },
-    });
-
-    // Register mutation
-    const registerMutation = useMutation({
-        mutationFn: async (userData: RegisterRequest) => {
-            const response = await authService.register(userData);
-            authService.setToken(response.access_token);
-
-            // Create user object
-            const user: User = {
-                id: 'temp-id', // You'll need to get this from the token or API
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                username: `${userData.firstName}${userData.lastName}`.toLowerCase(),
-                createdAt: new Date().toISOString(),
             };
-            authService.setUser(user);
+            void hydrateUser();
+        }
+    }, [user, queryClient]);
 
-            return response;
-        },
-        onSuccess: async () => {
+    const loginMutation = useMutation({
+        mutationFn: (credentials: LoginRequest) => authService.login(credentials),
+        onSuccess: async (session) => {
+            setUser(session.user);
             await queryClient.invalidateQueries({ queryKey: authKeys.user() });
         },
     });
 
-    // Logout function
-    const logout = () => {
-        authService.logout();
+    const registerMutation = useMutation({
+        mutationFn: (payload: RegisterRequest) => authService.register(payload),
+        onSuccess: async (session) => {
+            setUser(session.user);
+            await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+        },
+    });
+
+    const logout = async (): Promise<void> => {
+        await authService.logout();
+        setUser(null);
         queryClient.clear();
-        // Redirect to login page after logout
-        void navigate({ to: '/login' });
+        await navigate({ to: '/login' });
     };
 
     return {
         user,
-        token,
-        isAuthenticated,
+        isAuthenticated: authService.isAuthenticated(),
         isLoading: loginMutation.isPending || registerMutation.isPending,
         login: loginMutation.mutateAsync,
         register: registerMutation.mutateAsync,

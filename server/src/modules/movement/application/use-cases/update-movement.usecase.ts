@@ -48,13 +48,15 @@ export class UpdateMovementUseCase {
 
     const tags =
       input.tags && input.tags.length > 0
-        ? (await this.tagService.findOrCreate(input.tags)).map((tag) => {
-            const data = tag.toJSON();
-            return {
-              id: data.id,
-              name: data.name,
-            };
-          })
+        ? (await this.tagService.findOrCreate(input.tags, input.userId)).map(
+            (tag) => {
+              const data = tag.toJSON();
+              return {
+                id: data.id,
+                name: data.name,
+              };
+            },
+          )
         : snapshot.tags.map((tag) => ({
             id: tag.id,
             name: tag.name,

@@ -5,16 +5,32 @@ import {
   ManyToMany,
   JoinTable,
   CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Unique,
+  Index,
 } from 'typeorm';
 import { MovementOrmEntity } from '../../../movement/infrastructure/entities/movement.orm-entity';
+import { UserOrmEntity } from '../../../auth/infrastructure/entities/user.orm-entity';
 
 @Entity('tags')
+@Unique('uq_tags_user_id_name', ['userId', 'name'])
+@Index('idx_tags_user_id', ['userId'])
 export class TagOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   name: string;
+
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
+
+  @ManyToOne(() => UserOrmEntity, (user) => user.tags, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'user_id' })
+  user: UserOrmEntity;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

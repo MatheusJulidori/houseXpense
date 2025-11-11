@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { MovementType } from '../../domain/value-objects/movement-type';
-import { TagResponseDto } from '../../tag/presentation/dto/tag-response.dto';
+import { TagResponseDto } from '../../../tag/presentation/dto/tag-response.dto';
 
 const tagResponseDtoType = (): typeof TagResponseDto => TagResponseDto;
 

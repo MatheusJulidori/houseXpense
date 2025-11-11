@@ -48,7 +48,7 @@ export class CreateMovementUseCase {
 
     const tags =
       input.tags && input.tags.length > 0
-        ? await this.tagService.findOrCreate(input.tags)
+        ? await this.tagService.findOrCreate(input.tags, input.userId)
         : [];
 
     const date = this.resolveDate(input.date);

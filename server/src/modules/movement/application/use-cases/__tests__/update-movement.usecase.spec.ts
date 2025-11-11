@@ -58,6 +58,7 @@ describe('UpdateMovementUseCase', () => {
     const newTag = Tag.create({
       id: 'tag-2',
       name: 'Stream',
+      userId: 'user-1',
       createdAt: new Date('2025-02-01T00:00:00Z'),
     });
     findOrCreate.mockResolvedValue([newTag]);
@@ -69,7 +70,7 @@ describe('UpdateMovementUseCase', () => {
       tags: ['Stream'],
     });
 
-    expect(findOrCreate).toHaveBeenCalledWith(['Stream']);
+    expect(findOrCreate).toHaveBeenCalledWith(['Stream'], 'user-1');
     expect(save).toHaveBeenCalledWith(
       expect.objectContaining({
         description: 'Netflix Subscription',

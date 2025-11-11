@@ -19,10 +19,13 @@ export class TagService {
     private readonly tagRepository: TagRepository,
   ) {}
 
-  async create(createTagDto: CreateTagDto): Promise<Tag> {
+  async create(createTagDto: CreateTagDto, userId: string): Promise<Tag> {
     const normalizedName = Tag.normalizeName(createTagDto.name);
 
-    const existingTag = await this.tagRepository.findByName(normalizedName);
+    const existingTag = await this.tagRepository.findByNameForUser(
+      normalizedName,
+      userId,
+    );
 
     if (existingTag) {
       throw new ConflictException('Tag with this name already exists');
@@ -31,29 +34,30 @@ export class TagService {
     const tag = Tag.create({
       id: randomUUID(),
       name: normalizedName,
+      userId,
       createdAt: new Date(),
     });
 
     return this.tagRepository.save(tag);
   }
 
-  async findAll(): Promise<Tag[]> {
-    return this.tagRepository.findAll();
+  async findAll(userId: string): Promise<Tag[]> {
+    return this.tagRepository.findAllByUser(userId);
   }
 
-  async findOne(id: string): Promise<Tag> {
-    const tag = await this.tagRepository.findById(id);
+  async findOne(id: string, userId: string): Promise<Tag> {
+    const tag = await this.tagRepository.findByIdForUser(id, userId);
     if (!tag) {
       throw new NotFoundException('Tag not found');
     }
     return tag;
   }
 
-  async findByName(name: string): Promise<Tag | null> {
-    return this.tagRepository.findByName(name);
+  async findByName(name: string, userId: string): Promise<Tag | null> {
+    return this.tagRepository.findByNameForUser(name, userId);
   }
 
-  async findOrCreate(tagNames: string[]): Promise<Tag[]> {
+  async findOrCreate(tagNames: string[], userId: string): Promise<Tag[]> {
     const normalizedNames = tagNames
       .map((name) => Tag.normalizeName(name))
       .filter((name) => name.length > 0);
@@ -62,6 +66,6 @@ export class TagService {
       return [];
     }
 
-    return this.tagRepository.findOrCreateMany(normalizedNames);
+    return this.tagRepository.findOrCreateMany(userId, normalizedNames);
   }
 }

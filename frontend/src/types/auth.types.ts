@@ -10,8 +10,11 @@ export interface RegisterRequest {
     password: string;
 }
 
-export interface AuthResponse {
-    access_token: string;
+export interface AuthSessionResponse {
+    user: User;
+    csrfToken: string;
+    accessTokenExpiresAt: string;
+    refreshTokenExpiresAt: string;
 }
 
 export interface User {
@@ -24,10 +27,9 @@ export interface User {
 
 export interface AuthContextType {
     user: User | null;
-    token: string | null;
-    login: (credentials: LoginRequest) => Promise<void>;
-    register: (userData: RegisterRequest) => Promise<void>;
-    logout: () => void;
+    login: (credentials: LoginRequest) => Promise<AuthSessionResponse>;
+    register: (userData: RegisterRequest) => Promise<AuthSessionResponse>;
+    logout: () => Promise<void>;
     isAuthenticated: boolean;
     isLoading: boolean;
 }

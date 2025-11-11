@@ -68,6 +68,7 @@ describe('CreateMovementUseCase', () => {
     const tag = Tag.create({
       id: 'tag-1',
       name: 'Assinatura',
+      userId: 'user-1',
       createdAt: new Date('2025-01-01T00:00:00Z'),
     });
     findOrCreate.mockResolvedValue([tag]);
@@ -82,7 +83,7 @@ describe('CreateMovementUseCase', () => {
     });
 
     expect(findById).toHaveBeenCalledWith('user-1');
-    expect(findOrCreate).toHaveBeenCalledWith(['Assinatura']);
+    expect(findOrCreate).toHaveBeenCalledWith(['Assinatura'], 'user-1');
     expect(save).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'user-1',

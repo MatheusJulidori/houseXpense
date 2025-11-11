@@ -21,6 +21,7 @@ function RegisterPageComponent() {
 
     const { register, isLoading, registerError } = useAuth();
     const navigate = useNavigate();
+    const generatedUsername = `${formData.firstName}${formData.lastName}`.replace(/\s+/g, '').toLowerCase();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -150,6 +151,14 @@ function RegisterPageComponent() {
                                     A senha deve ter pelo menos 6 caracteres
                                 </p>
                             </div>
+
+                            <p className="text-xs text-muted-foreground">
+                                Seu nome de usuário será{' '}
+                                <span className="font-medium">
+                                    {generatedUsername || 'nomesobrenome'}
+                                </span>{' '}
+                                (minúsculas, sem espaços).
+                            </p>
                         </CardContent>
 
                         <CardFooter className="flex flex-col space-y-4">

@@ -9,4 +9,12 @@ export class TagResponseDto {
   @ApiProperty()
   @Expose()
   name: string;
+
+  @ApiProperty()
+  @Expose()
+  userId: string;
+
+  @ApiProperty()
+  @Expose()
+  createdAt: Date;
 }

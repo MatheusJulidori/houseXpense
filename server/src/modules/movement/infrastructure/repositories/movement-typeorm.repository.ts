@@ -55,7 +55,10 @@ export class MovementTypeormRepository implements MovementRepository {
       const tags =
         snapshot.tags.length > 0
           ? await tagRepo.find({
-              where: { id: In(snapshot.tags.map((tag) => tag.id)) },
+              where: {
+                id: In(snapshot.tags.map((tag) => tag.id)),
+                userId: snapshot.userId,
+              },
             })
           : [];
 

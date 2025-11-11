@@ -1,6 +1,7 @@
 export interface TagProps {
   id: string;
   name: string;
+  userId: string;
   createdAt: Date;
 }
 
@@ -23,6 +24,9 @@ export class Tag {
   private validate(props: TagProps): void {
     if (!props.id) {
       throw new Error('Tag id is required');
+    }
+    if (!props.userId) {
+      throw new Error('Tag userId is required');
     }
     if (!props.name.trim()) {
       throw new Error('Tag name is required');
@@ -50,6 +54,10 @@ export class Tag {
 
   get name(): string {
     return this.props.name;
+  }
+
+  get userId(): string {
+    return this.props.userId;
   }
 
   get createdAt(): Date {

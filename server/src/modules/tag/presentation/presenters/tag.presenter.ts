@@ -10,6 +10,8 @@ export class TagPresenter {
       {
         id: snapshot.id,
         name: snapshot.name,
+        userId: snapshot.userId,
+        createdAt: snapshot.createdAt,
       },
       {
         excludeExtraneousValues: true,

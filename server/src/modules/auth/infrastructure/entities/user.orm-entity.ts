@@ -6,6 +6,8 @@ import {
   OneToMany,
 } from 'typeorm';
 import { MovementOrmEntity } from '../../../movement/infrastructure/entities/movement.orm-entity';
+import { TagOrmEntity } from '../../../tag/infrastructure/entities/tag.orm-entity';
+import { RefreshTokenOrmEntity } from './refresh-token.orm-entity';
 
 @Entity('users')
 export class UserOrmEntity {
@@ -32,4 +34,13 @@ export class UserOrmEntity {
     (movement: MovementOrmEntity) => movement.user,
   )
   movements: MovementOrmEntity[];
+
+  @OneToMany(
+    () => RefreshTokenOrmEntity,
+    (token: RefreshTokenOrmEntity) => token.user,
+  )
+  refreshTokens: RefreshTokenOrmEntity[];
+
+  @OneToMany(() => TagOrmEntity, (tag: TagOrmEntity) => tag.user)
+  tags: TagOrmEntity[];
 }

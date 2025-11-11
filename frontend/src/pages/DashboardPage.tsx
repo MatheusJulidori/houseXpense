@@ -145,7 +145,7 @@ function DashboardPageComponent() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={logout}
+                onClick={() => void logout()}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <LogOut className="h-4 w-4 mr-2" />

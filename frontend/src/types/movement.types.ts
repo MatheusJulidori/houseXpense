@@ -9,7 +9,7 @@ export interface Movement {
     date: string;
     description: string;
     amount: number;
-    userId: string | null;
+    userId: string;
     tags: Tag[];
     createdAt: string;
 }

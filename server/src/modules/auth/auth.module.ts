@@ -10,10 +10,16 @@ import { UserTypeormRepository } from './infrastructure/repositories/user-typeor
 import { UserRepositoryToken } from './domain/ports/user.repository';
 import { UserOrmEntity } from './infrastructure/entities/user.orm-entity';
 import authConfig from '../../config/auth.config';
+import { RefreshTokenOrmEntity } from './infrastructure/entities/refresh-token.orm-entity';
+import { RefreshTokenRepositoryToken } from './domain/ports/refresh-token.repository';
+import { RefreshTokenTypeormRepository } from './infrastructure/repositories/refresh-token-typeorm.repository';
+import { AuthCookieService } from './application/auth-cookie.service';
+import { AuthCsrfGuard } from './presentation/guards/auth-csrf.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserOrmEntity]),
+    ConfigModule,
+    TypeOrmModule.forFeature([UserOrmEntity, RefreshTokenOrmEntity]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -29,9 +35,7 @@ import authConfig from '../../config/auth.config';
         }
 
         const signOptions: NonNullable<JwtModuleOptions['signOptions']> = {
-          expiresIn: (jwt.expiresIn ?? '24h') as NonNullable<
-            NonNullable<JwtModuleOptions['signOptions']>['expiresIn']
-          >,
+          expiresIn: jwt.expiresIn ?? 60 * 60 * 24,
         };
 
         const options: JwtModuleOptions = {
@@ -47,11 +51,22 @@ import authConfig from '../../config/auth.config';
   providers: [
     AuthService,
     JwtStrategy,
+    AuthCookieService,
+    AuthCsrfGuard,
     {
       provide: UserRepositoryToken,
       useClass: UserTypeormRepository,
     },
+    {
+      provide: RefreshTokenRepositoryToken,
+      useClass: RefreshTokenTypeormRepository,
+    },
   ],
-  exports: [AuthService, JwtStrategy, UserRepositoryToken],
+  exports: [
+    AuthService,
+    JwtStrategy,
+    UserRepositoryToken,
+    RefreshTokenRepositoryToken,
+  ],
 })
 export class AuthModule {}

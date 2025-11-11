@@ -25,8 +25,8 @@ It’s essentially a **tag-based expense tracker**, with:
 
 - **Users** (for login, eventually multi-user)
 - **Movements** (entries for income or expense)
-- **Tags** (flexible categorization system)
-- **JWT Auth** (simple, long-lived token)
+- **Tags** (flexible, per-user categorisation system)
+- **Cookie Auth** (HTTP-only access/refresh tokens with rotation)
 - **Filtering by tags** to analyze where money goes
 
 ### Example use
@@ -58,7 +58,7 @@ You can later filter:
 cp .env.example .env
 ```
 
-Update the values in `.env` (especially `POSTGRES_PASSWORD` and `JWT_SECRET`) before running the stack.
+Update the values in `.env` (especially `POSTGRES_PASSWORD`, `JWT_SECRET`, and the `AUTH_*` cookie settings) before running the stack. See [docs/auth-cookie-strategy.md](docs/auth-cookie-strategy.md) for guidance on the new authentication variables.
 
 ### 2. Start the Stack (Production-like)
 
@@ -121,7 +121,7 @@ make start ENV_FILE=.env.staging
 | -------------------- | --------------------------------- | ------------------------------------------------ |
 | **Backend**          | NestJS + TypeORM                  | Clean structure, rapid development               |
 | **Database**         | PostgreSQL 18 (Docker)            | Secure-by-default (SCRAM, private network)       |
-| **Auth**             | JWT                               | Basic authentication with cookies and tokens     |
+| **Auth**             | HTTP-only cookies + JWT           | Access token (24h) + refresh token (7d) rotation |
 | **Frontend**         | React + Tailwind + TanStack Query | Basic dashboard UI                               |
 | **Containerization** | Docker + Docker Compose           | One command bootstrap with frontend, backend, DB |
 | **Docs**             | Swagger                           | API docs available at `/api/docs`                |
@@ -149,6 +149,16 @@ All components now run locally (and in CI) via Docker Compose, with the backend 
 - **Infrastructure seams:** Feature-specific ORM entities were relocated into each module’s `infrastructure/entities/` folder, while shared bootstrapping (TypeORM connection, health endpoints) lives under `infrastructure/database` and `modules/health`.
 - **Hexagonal edges:** Infrastructure can be swapped (e.g., different ORM, external gateways) without touching business logic. Presentation never imports TypeORM or persistence entities—the new architecture test guards this boundary.
 - **Why this design?** It hits the sweet spot for a mid-sized portfolio project: faster iteration than full DDD, more maintainable than a flat layered service, and ready to grow into advanced patterns (CQRS, events) without rewrites.
+
+---
+
+## 🔐 Authentication & Security
+
+- **Session model:** login/register issue an HTTP-only access token (`access_token` cookie, 24h) and refresh token (`refresh_token` cookie, 7d) alongside a CSRF token cookie. Tokens rotate on each refresh request.
+- **Refresh storage:** hashed refresh + CSRF token pairs live in `auth_refresh_tokens`, allowing revocation, audit, and per-device metadata (IP/User-Agent).
+- **CSRF & rate limiting:** state-changing auth routes require the `X-CSRF-Token` header to match the CSRF cookie; login/register/refresh/logout are throttled (defaults: 10 requests/minute).
+- **Cookie config:** domain/path/secure/same-site attributes are fully environment driven (see `AUTH_COOKIE_*` vars in [docs/auth-cookie-strategy.md](docs/auth-cookie-strategy.md)).
+- **Tag privacy:** tags are now scoped per user (`tags.user_id` + unique constraint), ensuring data isolation across sessions.
 
 ---
 
@@ -182,18 +192,36 @@ All components now run locally (and in CI) via Docker Compose, with the backend 
 
 #### **Tag**
 
-| Field       | Type         | Notes                                 |
-| ----------- | ------------ | ------------------------------------- |
-| `id`        | UUID         | Primary key                           |
-| `name`      | string       | Lowercase, no spaces or special chars |
-| `movements` | many-to-many | Relation to `Movement`                |
+| Field       | Type         | Notes                                               |
+| ----------- | ------------ | --------------------------------------------------- |
+| `id`        | UUID         | Primary key                                         |
+| `name`      | string       | Lowercase, per-user unique constraint (`user_id`)   |
+| `user_id`   | UUID         | Owner; cascades on deletion                         |
+| `movements` | many-to-many | Relation to `Movement` via `movement_tags`          |
+| `createdAt` | date         | Default now()                                       |
+
+#### **auth_refresh_tokens**
+
+| Field            | Type        | Notes                                         |
+| ---------------- | ----------- | --------------------------------------------- |
+| `id`             | UUID        | Primary key                                   |
+| `user_id`        | UUID        | FK to `users` (cascade on delete)             |
+| `hashed_token`   | string      | Bcrypt hash of refresh token value            |
+| `hashed_csrf_token` | string  | Bcrypt hash of CSRF cookie value              |
+| `expires_at`     | timestamptz | Expiry of refresh session                     |
+| `revoked_at`     | timestamptz | Populated when token is explicitly revoked    |
+| `rotated_at`     | timestamptz | Timestamp of last rotation                    |
+| `user_agent`     | string      | Optional device fingerprint                   |
+| `ip_address`     | string      | Optional IP audit                             |
+| `created_at`     | timestamptz | Audit column                                   |
+| `updated_at`     | timestamptz | Audit column                                   |
 
 ## 🧰 Dependencies
 
 ### Core
 
 ```bash
-@nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata rxjs
+@nestjs/common @nestjs/core @nestjs/platform-express @nestjs/throttler cookie-parser reflect-metadata rxjs
 ```
 
 ### Database

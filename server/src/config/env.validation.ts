@@ -40,6 +40,66 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  AUTH_ACCESS_TOKEN_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_REFRESH_TOKEN_SECRET?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  AUTH_ACCESS_TOKEN_TTL?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  AUTH_REFRESH_TOKEN_TTL?: number;
+
+  @IsOptional()
+  @IsString()
+  AUTH_ACCESS_COOKIE_NAME?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_REFRESH_COOKIE_NAME?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_CSRF_COOKIE_NAME?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_COOKIE_DOMAIN?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_COOKIE_PATH?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_COOKIE_SAME_SITE?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_COOKIE_SECURE?: string;
+
+  @IsOptional()
+  @IsString()
+  AUTH_CSRF_HEADER_NAME?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  AUTH_RATE_LIMIT_TTL?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  AUTH_RATE_LIMIT_LIMIT?: number;
+
+  @IsOptional()
+  @IsString()
   DATABASE_URL?: string;
 
   @ValidateIf((env) => !env.DATABASE_URL)
