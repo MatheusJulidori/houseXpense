@@ -40,10 +40,10 @@ export class RefreshTokenOrmEntity {
   @Column({ name: 'rotated_at', type: 'timestamptz', nullable: true })
   rotatedAt: Date | null;
 
-  @Column({ name: 'user_agent', nullable: true })
+  @Column({ name: 'user_agent', type: 'text', nullable: true })
   userAgent?: string | null;
 
-  @Column({ name: 'ip_address', nullable: true })
+  @Column({ name: 'ip_address', type: 'text', nullable: true })
   ipAddress?: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
