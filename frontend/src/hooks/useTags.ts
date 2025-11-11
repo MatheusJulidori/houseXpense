@@ -36,7 +36,7 @@ export const useCreateTag = () => {
         mutationFn: (data: CreateTagRequest) => tagsService.createTag(data),
         onSuccess: () => {
             // Invalidate and refetch tags
-            queryClient.invalidateQueries({ queryKey: tagKeys.lists() });
+            void queryClient.invalidateQueries({ queryKey: tagKeys.lists() });
         },
     });
 };
@@ -49,7 +49,7 @@ export const useFindOrCreateTags = () => {
         mutationFn: (tagNames: string[]) => tagsService.findOrCreateTags(tagNames),
         onSuccess: () => {
             // Invalidate and refetch tags
-            queryClient.invalidateQueries({ queryKey: tagKeys.lists() });
+            void queryClient.invalidateQueries({ queryKey: tagKeys.lists() });
         },
     });
 };
@@ -58,17 +58,16 @@ export const useFindOrCreateTags = () => {
 export const useTagStats = () => {
     const { data: tags, isLoading, error } = useTags();
 
-    const stats = tags ? {
-        totalTags: tags.length,
-        mostUsedTags: tags
-            .map(tag => ({
-                ...tag,
-                usageCount: tag.movements?.length || 0,
-            }))
-            .sort((a, b) => b.usageCount - a.usageCount)
-            .slice(0, 10),
-        unusedTags: tags.filter(tag => !tag.movements || tag.movements.length === 0),
-    } : null;
+    const stats = tags
+        ? {
+              totalTags: tags.length,
+              mostUsedTags: tags.map((tag) => ({
+                  ...tag,
+                  usageCount: 0,
+              })),
+              unusedTags: [...tags],
+          }
+        : null;
 
     return {
         stats,

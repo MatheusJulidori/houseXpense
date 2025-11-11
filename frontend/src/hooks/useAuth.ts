@@ -27,8 +27,8 @@ export const useAuth = () => {
                 try {
                     const me = await authService.getCurrentUser();
                     authService.setUser(me);
-                    queryClient.invalidateQueries({ queryKey: authKeys.user() });
-                } catch (e) {
+                    await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+                } catch {
                     // If token invalid, logout
                     authService.logout();
                 }
@@ -48,8 +48,8 @@ export const useAuth = () => {
             authService.setUser(me);
             return response;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: authKeys.user() });
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: authKeys.user() });
         },
     });
 
@@ -71,8 +71,8 @@ export const useAuth = () => {
 
             return response;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: authKeys.user() });
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: authKeys.user() });
         },
     });
 
@@ -81,7 +81,7 @@ export const useAuth = () => {
         authService.logout();
         queryClient.clear();
         // Redirect to login page after logout
-        navigate({ to: '/login' });
+        void navigate({ to: '/login' });
     };
 
     return {

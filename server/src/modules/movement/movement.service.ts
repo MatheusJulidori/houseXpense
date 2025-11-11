@@ -7,6 +7,7 @@ import { CreateMovementDto } from './dto/create-movement.dto';
 import { TagService } from '../tag/tag.service';
 import { Tag } from '../../entities/tag.entity';
 import { UpdateMovementDto } from './dto/update-movement.dto';
+import { parseUtcDate, toLocalDateString } from './movement-date.util';
 
 @Injectable()
 export class MovementService {
@@ -17,17 +18,6 @@ export class MovementService {
     private userRepository: Repository<User>,
     private tagService: TagService,
   ) {}
-
-  private formatDateYMD(date: Date): string {
-    // convert a JS Date to YYYY-MM-DD in UTC-3
-    const tzOffsetMin = 180; // 3 hours
-    const utcMs = date.getTime() - tzOffsetMin * 60 * 1000;
-    const shifted = new Date(utcMs);
-    const y = shifted.getUTCFullYear();
-    const m = String(shifted.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(shifted.getUTCDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
 
   async create(
     createMovementDto: CreateMovementDto,
@@ -52,19 +42,21 @@ export class MovementService {
     const movementDateYMD =
       date && /^\d{4}-\d{2}-\d{2}$/.test(date)
         ? date
-        : this.formatDateYMD(new Date());
+        : toLocalDateString(new Date());
+
+    const movementDate = parseUtcDate(movementDateYMD);
 
     const movement = this.movementRepository.create({
       description,
       type,
       amount,
-      // TypeORM accepts string for date column
-      date: movementDateYMD as unknown as Date,
+      date: movementDate,
       user,
       tags: tagEntities,
     });
 
-    return this.movementRepository.save(movement);
+    const savedMovement = await this.movementRepository.save(movement);
+    return this.findOne(savedMovement.id, userId);
   }
 
   async findAll(userId: string, tagNames?: string[]): Promise<Movement[]> {
@@ -110,25 +102,25 @@ export class MovementService {
     if (typeof updateDto.description === 'string') {
       movement.description = updateDto.description;
     }
-    if (typeof updateDto.type === 'string') {
-      movement.type = updateDto.type as any;
+    if (updateDto.type) {
+      movement.type = updateDto.type;
     }
     if (typeof updateDto.amount === 'number') {
-      // TypeORM decimal can map to string, cast carefully
-      movement.amount = updateDto.amount as any;
+      movement.amount = Number(updateDto.amount);
     }
     if (typeof updateDto.date === 'string') {
       const ymd = /^\d{4}-\d{2}-\d{2}$/.test(updateDto.date)
         ? updateDto.date
-        : this.formatDateYMD(new Date(updateDto.date));
-      movement.date = ymd as unknown as Date;
+        : toLocalDateString(new Date(updateDto.date));
+      movement.date = parseUtcDate(ymd);
     }
     if (updateDto.tags) {
       const tagEntities = await this.tagService.findOrCreate(updateDto.tags);
       movement.tags = tagEntities;
     }
 
-    return this.movementRepository.save(movement);
+    const savedMovement = await this.movementRepository.save(movement);
+    return this.findOne(savedMovement.id, userId);
   }
 
   async remove(id: string, userId: string): Promise<void> {

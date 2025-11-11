@@ -5,18 +5,18 @@ import {
   CallHandler,
   Logger,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('RequestInterceptor');
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<Request>();
     const { method, originalUrl, ip, headers } = request;
-    const userAgent = headers['user-agent'] || '';
+    const userAgent = headers['user-agent'] ?? '';
     const startTime = Date.now();
 
     // Log request details
@@ -25,39 +25,51 @@ export class LoggingInterceptor implements NestInterceptor {
     );
 
     return next.handle().pipe(
-      tap((data) => {
-        const duration = Date.now() - startTime;
-        this.logger.debug(
-          `Request completed: ${method} ${originalUrl} - ${duration}ms`,
-        );
+      tap({
+        next: (data: unknown) => {
+          const duration = Date.now() - startTime;
+          this.logger.debug(
+            `Request completed: ${method} ${originalUrl} - ${duration}ms`,
+          );
 
-        // Log response data (be careful with sensitive data)
-        if (data && typeof data === 'object') {
-          const sanitizedData = this.sanitizeData(data);
-          this.logger.debug(`Response data: ${JSON.stringify(sanitizedData)}`);
-        }
-      }),
-      catchError((error) => {
-        const duration = Date.now() - startTime;
-        this.logger.error(
-          `Request failed: ${method} ${originalUrl} - ${duration}ms - Error: ${error.message}`,
-          error.stack,
-        );
-        return throwError(() => error);
+          if (this.isLoggableObject(data)) {
+            const sanitizedData = this.sanitizeData(data);
+            this.logger.debug(
+              `Response data: ${JSON.stringify(sanitizedData)}`,
+            );
+          }
+        },
+        error: (error: unknown) => {
+          const duration = Date.now() - startTime;
+          if (error instanceof Error) {
+            this.logger.error(
+              `Request failed: ${method} ${originalUrl} - ${duration}ms - Error: ${error.message}`,
+              error.stack,
+            );
+          } else {
+            this.logger.error(
+              `Request failed: ${method} ${originalUrl} - ${duration}ms - Unknown error`,
+            );
+          }
+        },
       }),
     );
   }
 
-  private sanitizeData(data: any): any {
-    if (typeof data !== 'object' || data === null) {
-      return data;
-    }
+  private isLoggableObject(data: unknown): data is Record<string, unknown> {
+    return typeof data === 'object' && data !== null;
+  }
 
+  private sanitizeData(data: unknown): unknown {
     if (Array.isArray(data)) {
       return data.map((item) => this.sanitizeData(item));
     }
 
-    const sanitized = { ...data };
+    if (!this.isLoggableObject(data)) {
+      return data;
+    }
+
+    const sanitized: Record<string, unknown> = { ...data };
 
     // Remove sensitive fields
     const sensitiveFields = [
@@ -74,9 +86,9 @@ export class LoggingInterceptor implements NestInterceptor {
     });
 
     // Recursively sanitize nested objects
-    Object.keys(sanitized).forEach((key) => {
-      if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-        sanitized[key] = this.sanitizeData(sanitized[key]);
+    Object.entries(sanitized).forEach(([key, value]) => {
+      if (this.isLoggableObject(value) || Array.isArray(value)) {
+        sanitized[key] = this.sanitizeData(value);
       }
     });
 

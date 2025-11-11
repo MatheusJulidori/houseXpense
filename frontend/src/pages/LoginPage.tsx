@@ -26,7 +26,7 @@ function LoginPageComponent() {
         try {
             await login(formData);
             // Redirect to dashboard after successful login
-            navigate({ to: '/dashboard' });
+            await navigate({ to: '/dashboard' });
         } catch (error) {
             console.error('Error logging in:', error);
             // Error is handled by the hook

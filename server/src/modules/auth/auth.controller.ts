@@ -20,6 +20,9 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogMethod } from '../../decorators/log.decorator';
 import { JwtAuthGuard } from '../../utils/jwt-auth.guard';
+import { plainToInstance } from 'class-transformer';
+import { AuthTokenResponseDto } from './dto/auth-token-response.dto';
+import { CurrentUserResponseDto } from './dto/current-user-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -36,18 +39,13 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'User registered successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: { type: 'string' },
-      },
-    },
+    type: AuthTokenResponseDto,
   })
   @ApiResponse({ status: 409, description: 'Username already exists' })
   @LogMethod('info')
   async register(
     @Body() registerDto: RegisterDto,
-  ): Promise<{ access_token: string }> {
+  ): Promise<AuthTokenResponseDto> {
     this.logger.log(
       `Register: ${registerDto.firstName} ${registerDto.lastName}`,
     );
@@ -55,7 +53,9 @@ export class AuthController {
     this.logger.log(
       `Register success: ${registerDto.firstName} ${registerDto.lastName}`,
     );
-    return result;
+    return plainToInstance(AuthTokenResponseDto, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Post('login')
@@ -64,36 +64,35 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Login successful',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: { type: 'string' },
-      },
-    },
+    type: AuthTokenResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @LogMethod('info')
-  async login(@Body() loginDto: LoginDto): Promise<{ access_token: string }> {
+  async login(@Body() loginDto: LoginDto): Promise<AuthTokenResponseDto> {
     this.logger.log(`Login: ${loginDto.username}`);
     const result = await this.authService.login(loginDto);
     this.logger.log(`Login success: ${loginDto.username}`);
-    return result;
+    return plainToInstance(AuthTokenResponseDto, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current authenticated user' })
-  @ApiResponse({ status: 200, description: 'Current user returned' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user returned',
+    type: CurrentUserResponseDto,
+  })
   @LogMethod('info')
-  async me(@Request() req: { user: { userId: string } }) {
+  async me(
+    @Request() req: { user: { userId: string } },
+  ): Promise<CurrentUserResponseDto> {
     const user = await this.authService.validateUser(req.user.userId);
-    return {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      createdAt: user.createdAt,
-    };
+    return plainToInstance(CurrentUserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 }

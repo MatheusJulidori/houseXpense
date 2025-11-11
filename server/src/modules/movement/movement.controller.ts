@@ -24,8 +24,10 @@ import { MovementService } from './movement.service';
 import { CreateMovementDto } from './dto/create-movement.dto';
 import { UpdateMovementDto } from './dto/update-movement.dto';
 import { JwtAuthGuard } from '../../utils/jwt-auth.guard';
-import { Movement } from '../../entities/movement.entity';
 import { LogMethod } from '../../decorators/log.decorator';
+import { MovementResponseDto } from './dto/movement-response.dto';
+import { MovementPresenter } from './presenters/movement.presenter';
+import { GetMovementsQueryDto } from './dto/get-movements-query.dto';
 
 @ApiTags('movements')
 @Controller('movements')
@@ -40,14 +42,18 @@ export class MovementController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a movement' })
-  @ApiResponse({ status: 200, description: 'Movement updated', type: Movement })
+  @ApiResponse({
+    status: 200,
+    description: 'Movement updated',
+    type: MovementResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Movement not found' })
   @LogMethod('info')
   async update(
     @Param('id') id: string,
     @Body() updateMovementDto: UpdateMovementDto,
     @Request() req: { user: { userId: string } },
-  ): Promise<Movement> {
+  ): Promise<MovementResponseDto> {
     this.logger.log(`Updating movement ${id} for user ${req.user.userId}`);
     const result = await this.movementService.update(
       id,
@@ -55,7 +61,7 @@ export class MovementController {
       updateMovementDto,
     );
     this.logger.log(`Movement updated: ${result.id}`);
-    return result;
+    return MovementPresenter.toResponse(result);
   }
 
   @Post()
@@ -64,13 +70,13 @@ export class MovementController {
   @ApiResponse({
     status: 201,
     description: 'Movement created successfully',
-    type: Movement,
+    type: MovementResponseDto,
   })
   @LogMethod('info')
   async create(
     @Body() createMovementDto: CreateMovementDto,
     @Request() req: { user: { userId: string } },
-  ): Promise<Movement> {
+  ): Promise<MovementResponseDto> {
     this.logger.log(
       `Creating movement for user ${req.user.userId}: ${createMovementDto.description} - ${createMovementDto.amount}`,
     );
@@ -81,7 +87,7 @@ export class MovementController {
     this.logger.log(
       `Movement created successfully: ${result.id} - ${result.description}`,
     );
-    return result;
+    return MovementPresenter.toResponse(result);
   }
 
   @Get()
@@ -95,14 +101,20 @@ export class MovementController {
   @ApiResponse({
     status: 200,
     description: 'List of movements',
-    type: [Movement],
+    type: MovementResponseDto,
+    isArray: true,
   })
   @LogMethod('debug')
   async findAll(
     @Request() req: { user: { userId: string } },
-    @Query('tags') tags?: string,
-  ): Promise<Movement[]> {
-    const tagNames = tags ? tags.split(',').map((t) => t.trim()) : undefined;
+    @Query() query: GetMovementsQueryDto,
+  ): Promise<MovementResponseDto[]> {
+    const tagNames = query.tags
+      ? query.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : undefined;
     this.logger.debug(
       `Fetching movements for user ${req.user.userId}${tagNames ? ` with tags: ${tagNames.join(', ')}` : ''}`,
     );
@@ -113,7 +125,7 @@ export class MovementController {
     this.logger.debug(
       `Found ${result.length} movements for user ${req.user.userId}`,
     );
-    return result;
+    return MovementPresenter.toResponseList(result);
   }
 
   @Get(':id')
@@ -121,18 +133,18 @@ export class MovementController {
   @ApiResponse({
     status: 200,
     description: 'Movement found',
-    type: Movement,
+    type: MovementResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Movement not found' })
   @LogMethod('debug')
   async findOne(
     @Param('id') id: string,
     @Request() req: { user: { userId: string } },
-  ): Promise<Movement> {
+  ): Promise<MovementResponseDto> {
     this.logger.debug(`Fetching movement ${id} for user ${req.user.userId}`);
     const result = await this.movementService.findOne(id, req.user.userId);
     this.logger.debug(`Movement found: ${result.id} - ${result.description}`);
-    return result;
+    return MovementPresenter.toResponse(result);
   }
 
   @Delete(':id')

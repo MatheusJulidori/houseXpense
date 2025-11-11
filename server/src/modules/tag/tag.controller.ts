@@ -18,8 +18,9 @@ import {
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { JwtAuthGuard } from '../../utils/jwt-auth.guard';
-import { Tag } from '../../entities/tag.entity';
 import { LogMethod } from '../../decorators/log.decorator';
+import { TagResponseDto } from './dto/tag-response.dto';
+import { TagPresenter } from './presenters/tag.presenter';
 
 @ApiTags('tags')
 @Controller('tags')
@@ -38,17 +39,17 @@ export class TagController {
   @ApiResponse({
     status: 201,
     description: 'Tag created successfully',
-    type: Tag,
+    type: TagResponseDto,
   })
   @ApiResponse({ status: 409, description: 'Tag already exists' })
   @LogMethod('info')
-  async create(@Body() createTagDto: CreateTagDto): Promise<Tag> {
+  async create(@Body() createTagDto: CreateTagDto): Promise<TagResponseDto> {
     this.logger.log(`Creating tag: ${createTagDto.name}`);
     const result = await this.tagService.create(createTagDto);
     this.logger.log(
       `Tag created successfully: ${result.name} (ID: ${result.id})`,
     );
-    return result;
+    return TagPresenter.toResponse(result);
   }
 
   @Get()
@@ -56,14 +57,15 @@ export class TagController {
   @ApiResponse({
     status: 200,
     description: 'List of all tags',
-    type: [Tag],
+    type: TagResponseDto,
+    isArray: true,
   })
   @LogMethod('debug')
-  async findAll(): Promise<Tag[]> {
+  async findAll(): Promise<TagResponseDto[]> {
     this.logger.debug('Fetching all tags');
     const result = await this.tagService.findAll();
     this.logger.debug(`Found ${result.length} tags`);
-    return result;
+    return TagPresenter.toResponseList(result);
   }
 
   @Get(':id')
@@ -71,14 +73,14 @@ export class TagController {
   @ApiResponse({
     status: 200,
     description: 'Tag found',
-    type: Tag,
+    type: TagResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Tag not found' })
   @LogMethod('debug')
-  async findOne(@Param('id') id: string): Promise<Tag> {
+  async findOne(@Param('id') id: string): Promise<TagResponseDto> {
     this.logger.debug(`Fetching tag with ID: ${id}`);
     const result = await this.tagService.findOne(id);
     this.logger.debug(`Tag found: ${result.name} (ID: ${result.id})`);
-    return result;
+    return TagPresenter.toResponse(result);
   }
 }

@@ -255,6 +255,12 @@ The target launches the official TruffleHog container against the repository and
 
 ---
 
+## 🤝 Contributing
+
+Fork the repository, follow the quality rules in [`docs/code-quality-guidelines.md`](docs/code-quality-guidelines.md), and submit a Pull Request. Detailed workflow instructions are available in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
 ## 📈 Future Improvements
 
 - Monthly summaries

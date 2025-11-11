@@ -105,7 +105,7 @@ function AddMovementFormComponent({ isOpen, onClose }: AddMovementFormProps) {
             setNewTagName('');
             // auto-select the newly created tag
             setSelectedTags(prev => [...prev, created.id]);
-        } catch (e) {
+        } catch {
             // swallow; service throws ConflictException if exists
         }
     };

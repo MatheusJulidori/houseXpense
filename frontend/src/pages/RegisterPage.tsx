@@ -27,7 +27,7 @@ function RegisterPageComponent() {
         try {
             await register(formData);
             // Redirect to dashboard after successful registration
-            navigate({ to: '/dashboard' });
+            await navigate({ to: '/dashboard' });
         } catch (error) {
             console.error('Error registering:', error);
             // Error is handled by the hook

@@ -10,9 +10,12 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: (failureCount, error: any) => {
-        // Don't retry on 4xx errors
-        if (error?.statusCode >= 400 && error?.statusCode < 500) {
+      retry: (failureCount, error: unknown) => {
+        const statusCode =
+          typeof error === 'object' && error !== null && 'statusCode' in error
+            ? Number((error as { statusCode: unknown }).statusCode)
+            : undefined;
+        if (statusCode && statusCode >= 400 && statusCode < 500) {
           return false;
         }
         return failureCount < 3;
