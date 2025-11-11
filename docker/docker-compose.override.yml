@@ -8,6 +8,7 @@ services:
             context: ../server
             dockerfile: Dockerfile
             target: development
+        user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
         command: ["npm", "run", "start:dev"]
         environment:
             NODE_ENV: development
@@ -18,13 +19,15 @@ services:
         ports:
             - "${SERVER_PORT_DEV:-3000}:3000"
         read_only: false
-        tmpfs: []
+        tmpfs:
+            - /tmp
 
     frontend:
         build:
             context: ../frontend
             dockerfile: Dockerfile
             target: development
+        user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
         command:
             ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
         environment:
@@ -36,7 +39,6 @@ services:
         ports:
             - "${FRONTEND_PORT_DEV:-5173}:5173"
         read_only: false
-        tmpfs: []
 
 volumes:
     backend_node_modules:

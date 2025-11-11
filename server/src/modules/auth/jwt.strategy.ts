@@ -2,9 +2,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigService, ConfigType } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import authConfig from '../../config/auth.config';
 
 interface JwtPayload {
   sub: string;
@@ -19,12 +20,18 @@ interface UserPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(configService: ConfigService) {
-    const secretOrKey =
-      configService.get<string>('JWT_SECRET') || 'your-secret-key';
+    const authConfigValues =
+      configService.get<ConfigType<typeof authConfig>>('auth');
+    const jwtConfig = authConfigValues?.jwt;
+
+    if (!jwtConfig?.secret) {
+      throw new Error('JWT secret is not configured.');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey,
+      secretOrKey: jwtConfig.secret,
     });
   }
 

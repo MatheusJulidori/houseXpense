@@ -4,6 +4,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggingMiddleware } from './middleware/logging.middleware';
+import { ConfigService, ConfigType } from '@nestjs/config';
+import appConfig from './config/app.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,14 +16,20 @@ async function bootstrap() {
   // Add logging middleware
   app.use(new LoggingMiddleware().use.bind(new LoggingMiddleware()));
 
-  const corsOriginsEnv = process.env.CORS_ORIGIN ?? '';
-  const corsOrigins =
-    corsOriginsEnv.trim().length > 0
-      ? corsOriginsEnv.split(',').map((origin) => origin.trim())
-      : ['http://localhost:5173', 'http://localhost:3000'];
+  const configService = app.get(ConfigService);
+  const applicationConfig = configService.get<ConfigType<typeof appConfig>>(
+    'app',
+  ) ?? {
+    nodeEnv: 'development',
+    port: 3000,
+    logLevel: 'info',
+    corsOrigins: ['http://localhost:5173', 'http://localhost:3000'],
+  };
 
   app.enableCors({
-    origin: corsOrigins,
+    origin: applicationConfig.corsOrigins?.length
+      ? applicationConfig.corsOrigins
+      : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
@@ -46,7 +54,7 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (applicationConfig.nodeEnv !== 'production') {
     const document = SwaggerModule.createDocument(
       app,
       new DocumentBuilder()
@@ -59,7 +67,7 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  const port = process.env.PORT ?? 4000;
+  const port = applicationConfig.port ?? 4000;
   await app.listen(port, '0.0.0.0');
   console.log(`Server is running on port ${port}`);
 }

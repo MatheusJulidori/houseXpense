@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { User } from '../entities/user.entity';
 import { Tag } from '../entities/tag.entity';
 import { Movement } from '../entities/movement.entity';
+import databaseConfig from '../config/database.config';
 
 @Module({
   imports: [
@@ -13,27 +14,38 @@ import { Movement } from '../entities/movement.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const databaseUrl = configService.get<string>('DATABASE_URL') || '';
-        const dbKeyPath = configService.get<string>('DB_KEY_PATH');
-        const nodeEnv = configService.get<string>('NODE_ENV');
+        const dbConfig =
+          configService.get<ConfigType<typeof databaseConfig>>('database');
 
-        // Parse DATABASE_URL
-        const url = new URL(databaseUrl);
-        const host = url.hostname;
-        const port = parseInt(url.port) || 5432;
-        const username = url.username;
-        const password = url.password;
-        const database = url.pathname.slice(1);
+        const databaseUrl = dbConfig?.url;
+        if (!databaseUrl) {
+          throw new Error(
+            'DATABASE_URL or equivalent database configuration is required.',
+          );
+        }
 
-        // SSL configuration
+        const { hostname, port, username, password, pathname } = new URL(
+          databaseUrl,
+        );
+
+        const databaseName = pathname.replace(/^\//, '');
+
         let ssl: boolean | { ca?: string; rejectUnauthorized: boolean } = false;
 
-        if (dbKeyPath) {
-          let certPath = dbKeyPath;
+        const sslMode = dbConfig?.sslMode?.toLowerCase();
+        const keyPath = dbConfig?.sslKeyPath;
 
-          // If path doesn't start with /, it's relative to project root
-          if (!dbKeyPath.startsWith('/')) {
-            certPath = path.resolve(process.cwd(), dbKeyPath);
+        if (sslMode === 'require' || sslMode === 'verify-full') {
+          ssl = {
+            rejectUnauthorized: sslMode === 'verify-full',
+          };
+        }
+
+        if (keyPath) {
+          let certPath = keyPath;
+
+          if (!keyPath.startsWith('/')) {
+            certPath = path.resolve(process.cwd(), keyPath);
           }
 
           if (fs.existsSync(certPath)) {
@@ -41,12 +53,12 @@ import { Movement } from '../entities/movement.entity';
               const ca = fs.readFileSync(certPath, 'utf8');
               ssl = {
                 ca,
-                rejectUnauthorized: true,
+                rejectUnauthorized: sslMode !== 'allow',
               };
               console.log(`✅ SSL certificate loaded from: ${certPath}`);
             } catch {
               console.warn(
-                '⚠️  Failed to read SSL certificate, using rejectUnauthorized: false',
+                '⚠️  Failed to read SSL certificate, falling back to rejectUnauthorized: false',
               );
               ssl = {
                 rejectUnauthorized: false,
@@ -58,19 +70,17 @@ import { Movement } from '../entities/movement.entity';
               rejectUnauthorized: false,
             };
           }
-        } else if (databaseUrl.includes('sslmode=require')) {
-          ssl = {
-            rejectUnauthorized: false,
-          };
         }
+
+        const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development';
 
         return {
           type: 'postgres',
-          host,
-          port,
+          host: hostname,
+          port: Number(port) || 5432,
           username,
           password,
-          database,
+          database: databaseName,
           ssl,
           entities: [User, Tag, Movement],
           synchronize: nodeEnv !== 'production',

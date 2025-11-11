@@ -1,8 +1,10 @@
+import { appConfig } from '../config';
+
 // App constants
 export const APP_CONFIG = {
-    name: import.meta.env.VITE_APP_NAME || 'houseXpense',
-    version: import.meta.env.VITE_APP_VERSION || '1.0.0',
-    apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:4003',
+    name: appConfig.appName,
+    version: appConfig.appVersion,
+    apiUrl: appConfig.apiUrl,
 };
 
 // Local storage keys

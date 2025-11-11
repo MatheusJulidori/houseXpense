@@ -71,7 +71,7 @@ export class AuthService {
 
     // Generate JWT token (365 days expiration)
     const payload = { sub: user.id, username: user.username };
-    const access_token = this.jwtService.sign(payload, { expiresIn: '365d' });
+    const access_token = this.jwtService.sign(payload);
     this.logger.debug('JWT token generated successfully');
 
     return { access_token };
@@ -106,7 +106,7 @@ export class AuthService {
     this.logger.debug('Password validation successful');
 
     const payload = { sub: user.id, username: user.username };
-    const access_token = this.jwtService.sign(payload, { expiresIn: '365d' });
+    const access_token = this.jwtService.sign(payload);
     this.logger.debug('JWT token generated successfully');
 
     this.logger.log(`Login successful for user: ${username} (ID: ${user.id})`);

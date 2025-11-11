@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import type { ApiConfig, ApiError } from '../types/api.types';
+import { appConfig } from '../config';
 
 // API Configuration
 const API_CONFIG: ApiConfig = {
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    baseURL: appConfig.apiUrl,
     timeout: 10000,
 };
 

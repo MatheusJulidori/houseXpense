@@ -104,6 +104,7 @@ make stop         # stop containers, keep volumes
 make purge        # stop containers and remove volumes/orphans
 make logs         # follow service logs
 make ps           # list container status
+make scan-secrets # run TruffleHog docker scan for potential secrets
 ```
 
 Example with a custom env file:
@@ -225,6 +226,12 @@ Key values to review before running locally:
 - `BACKEND_LOG_LEVEL` – adjust verbosity (`error`, `warn`, `info`, `debug`, `verbose`)
 - `CORS_ORIGIN` – comma-separated list of allowed browser origins (e.g. `http://localhost:5173,http://localhost:3000`)
 
+Validate a specific env file at any time:
+
+```bash
+cd server && npm run validate:env -- ../.env.example
+```
+
 For production/cloud environments, replicate the same keys in your secrets manager and adjust `DATABASE_URL` to point at your managed PostgreSQL instance (ensure TLS/SSL is enforced).
 
 ---
@@ -233,6 +240,18 @@ For production/cloud environments, replicate the same keys in your secrets manag
 
 - **Local (Docker Compose):** connections terminate inside the private Docker network; SSL is disabled by default but can be enabled by mounting certificates and setting `DB_KEY_PATH`.
 - **Managed PostgreSQL (e.g., Aiven, RDS):** keep `DATABASE_URL` with `sslmode=require` and provide `DB_KEY_PATH` / CA bundle if the provider requires certificate pinning.
+
+---
+
+## 🛡️ Secret Scanning
+
+Run automated secret detection before committing or pushing changes:
+
+```bash
+make scan-secrets
+```
+
+The target launches the official TruffleHog container against the repository and fails on potential leaks. Rotate exposed credentials immediately and keep secret material out of version control.
 
 ---
 

@@ -49,9 +49,10 @@ export class MovementService {
     }
 
     // Set date or use current date in UTC-3, stored as YYYY-MM-DD to avoid timezone drift
-    const movementDateYMD = date && /^\d{4}-\d{2}-\d{2}$/.test(date)
-      ? date
-      : this.formatDateYMD(new Date());
+    const movementDateYMD =
+      date && /^\d{4}-\d{2}-\d{2}$/.test(date)
+        ? date
+        : this.formatDateYMD(new Date());
 
     const movement = this.movementRepository.create({
       description,
