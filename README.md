@@ -138,6 +138,18 @@ Database (PostgreSQL, Aiven)
 
 All components now run locally (and in CI) via Docker Compose, with the backend communicating with PostgreSQL over a private bridge network. Future hosting (Render, Fly, etc.) can consume the same images produced in Phase 8.
 
+### Backend Architecture – Modular Clean Approach
+
+- **Modular monolith:** Each feature (`auth`, `movements`, `tags`) owns a complete slice with `presentation/`, `application/`, `domain/`, and `infrastructure/` folders. Modules communicate through interfaces/tokens, keeping their internals private.
+- **Clean layering:**  
+  - Presentation (controllers, presenters, DTOs) handles transport and forwards requests to application use cases.  
+  - Application hosts focused use cases that orchestrate domain logic and depend only on abstractions.  
+  - Domain contains pure TypeScript models/value objects plus repository interfaces.  
+  - Infrastructure implements adapters (TypeORM repositories, strategies) that satisfy domain contracts.
+- **Infrastructure seams:** Feature-specific ORM entities were relocated into each module’s `infrastructure/entities/` folder, while shared bootstrapping (TypeORM connection, health endpoints) lives under `infrastructure/database` and `modules/health`.
+- **Hexagonal edges:** Infrastructure can be swapped (e.g., different ORM, external gateways) without touching business logic. Presentation never imports TypeORM or persistence entities—the new architecture test guards this boundary.
+- **Why this design?** It hits the sweet spot for a mid-sized portfolio project: faster iteration than full DDD, more maintainable than a flat layered service, and ready to grow into advanced patterns (CQRS, events) without rewrites.
+
 ---
 
 ## 🗃️ Database Model

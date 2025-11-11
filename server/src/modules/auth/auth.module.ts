@@ -3,15 +3,17 @@ import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { JwtStrategy } from './jwt.strategy';
-import { User } from '../../entities/user.entity';
+import { AuthService } from './application/auth.service';
+import { AuthController } from './presentation/auth.controller';
+import { JwtStrategy } from './infrastructure/jwt.strategy';
+import { UserTypeormRepository } from './infrastructure/repositories/user-typeorm.repository';
+import { UserRepositoryToken } from './domain/ports/user.repository';
+import { UserOrmEntity } from './infrastructure/entities/user.orm-entity';
 import authConfig from '../../config/auth.config';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([UserOrmEntity]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -42,7 +44,14 @@ import authConfig from '../../config/auth.config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    {
+      provide: UserRepositoryToken,
+      useClass: UserTypeormRepository,
+    },
+  ],
+  exports: [AuthService, JwtStrategy, UserRepositoryToken],
 })
 export class AuthModule {}

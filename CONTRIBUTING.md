@@ -1,7 +1,7 @@
 # Contributing
 
 Thank you for your interest in improving **houseXpense**!  
-This project is public as a portfolio showcase, so every change must reflect production-ready standards.
+This project follows a modular clean architecture (modular monolith + clean + hexagonal edges). Every change must respect layer boundaries and reflect production-ready standards.
 
 ## Workflow
 
@@ -38,7 +38,8 @@ For bugs, feel free to open an **Issue** instead of a PR if you do not intend to
 Pull Requests are reviewed against the rules documented in [`docs/code-quality-guidelines.md`](docs/code-quality-guidelines.md). Highlights:
 
 - Controllers must rely on DTOs for all request and response payloads.
-- Services should encapsulate business rules only—keep transport, logging, and formatting elsewhere.
+- Presentation layer (controllers/presenters) can only depend on application use cases. Do not import persistence entities, TypeORM repositories, or infrastructure providers directly.
+- Use cases encapsulate business rules—keep transport, logging, and formatting elsewhere.
 - Prefer reusable hooks/utilities on the frontend; avoid duplicating filtering or statistics logic.
 - All TypeScript must compile under the enforced strict settings (no implicit `any`, no unsafe member access).
 - Sensitive data must never reach logs or the UI.
