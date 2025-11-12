@@ -6,7 +6,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggingMiddleware } from './middleware/logging.middleware';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import appConfig from './config/app.config';
-import cookieParser from 'cookie-parser';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
