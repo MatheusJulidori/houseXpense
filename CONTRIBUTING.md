@@ -5,7 +5,7 @@ This project follows a modular clean architecture (modular monolith + clean + he
 
 ## Workflow
 
-1. **Fork** `julidori_finances` into your own GitHub account.  
+1. **Fork** `houseXpense` into your own GitHub account.  
 2. **Clone** your fork and create a feature branch:
 
    ```bash
